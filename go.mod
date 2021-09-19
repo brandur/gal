@@ -10,6 +10,7 @@ go 1.16
 require (
 	github.com/brandur/modulir v0.0.0-20210918213402-171ef6f5bcf3
 	github.com/brandur/sorg v0.0.0-20210911194023-a32e09d18f62
+	github.com/caarlos0/env/v6 v6.7.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/yosssi/ace v0.0.5 // indirect

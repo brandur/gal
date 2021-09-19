@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yosssi/ace"
@@ -25,6 +27,7 @@ import (
 
 type Conf struct {
 	Concurrency int
+	GalEnv      string `env:"GAL_ENV" envDefault:"production"`
 	MagickBin   string
 	MozJPEGBin  string
 	SourceDirs  []string
@@ -32,10 +35,14 @@ type Conf struct {
 	Verbose     bool
 }
 
-var conf = &Conf{}
+var conf Conf
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	if err := env.Parse(&conf); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing env configuration: %v\n", err)
+		os.Exit(1)
+	}
 
 	rootCmd := &cobra.Command{
 		Use:   "gal",
@@ -68,13 +75,13 @@ when they're detected. A webserver is started on PORT (default
 			modulir.Build(getModulirConfig(), build)
 		},
 	}
-	buildCmd.Flags().StringVar(&conf.TargetDir, "target-dir", "",
+	buildCmd.Flags().StringVarP(&conf.TargetDir, "target-dir", "t", "",
 		"Path to directory where to put output artifacts (required)")
 	_ = buildCmd.MarkFlagRequired("target-dir")
 	rootCmd.AddCommand(buildCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error executing command: %v", err)
+		fmt.Fprintf(os.Stderr, "Error executing command: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -164,6 +171,9 @@ func build(c *modulir.Context) []error {
 //
 //
 //////////////////////////////////////////////////////////////////////////////
+
+//go:embed views/*.ace
+var views embed.FS
 
 func getLog() modulir.LoggerInterface {
 	log := logrus.New()
@@ -261,8 +271,20 @@ func renderIndex(c *modulir.Context, allPhotoPaths []string) (bool, error) {
 		allPhotoPaths[i], allPhotoPaths[j] = allPhotoPaths[j], allPhotoPaths[i]
 	})
 
+	aceOpts := &ace.Options{FuncMap: mtemplate.FuncMap}
+
+	// In production, use views bundled into the binary by way of `go:embed`. In
+	// development, we read from local disk for less painful iteration on design
+	// where views need to be changed incrementally.
+	if conf.GalEnv == "production" {
+		aceOpts.Asset = views.ReadFile
+	}
+
+	// Pretty HTML
+	aceOpts.Indent = "    "
+
 	err := mace.RenderFile(c, "./views/layout.ace", "./views/index.ace",
-		path.Join(c.TargetDir, "index.html"), &ace.Options{FuncMap: mtemplate.FuncMap}, map[string]interface{}{
+		path.Join(c.TargetDir, "index.html"), aceOpts, map[string]interface{}{
 			"AllPhotoPaths": allPhotoPaths,
 		})
 	if err != nil {
