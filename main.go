@@ -36,9 +36,6 @@ var conf = &Conf{}
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	mimage.MagickBin = conf.MagickBin
-	mimage.MozJPEGBin = conf.MozJPEGBin
-	modulir.Build(getModulirConfig(), build)
 
 	rootCmd := &cobra.Command{
 		Use:   "gal",
@@ -65,6 +62,8 @@ when they're detected. A webserver is started on PORT (default
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			mustImageBins()
+			mimage.MagickBin = conf.MagickBin
+			mimage.MozJPEGBin = conf.MozJPEGBin
 			conf.SourceDirs = args
 			modulir.Build(getModulirConfig(), build)
 		},
@@ -135,6 +134,7 @@ func build(c *modulir.Context) []error {
 	var allPhotoPaths []string
 
 	for _, dir := range conf.SourceDirs {
+		dir = path.Clean(dir)
 		outerDir := path.Dir(dir)
 		base := path.Base(dir)
 		photoPaths, err := recurseDir(c, outerDir, base)
@@ -208,14 +208,16 @@ func mustImageBins() {
 		conf.MagickBin = os.Getenv("MAGICK_BIN")
 	}
 	if conf.MagickBin == "" {
-		fmt.Fprintf(os.Stderr, "Must either set MAGICK_BIN or --magick-bin")
+		fmt.Fprintf(os.Stderr, "Must either set MAGICK_BIN or --magick-bin\n")
+		os.Exit(1)
 	}
 
 	if conf.MozJPEGBin == "" {
 		conf.MozJPEGBin = os.Getenv("MOZJPEG_BIN")
 	}
 	if conf.MozJPEGBin == "" {
-		fmt.Fprintf(os.Stderr, "Must either set MOZJPEG_BIN or --mozjpeg-bin")
+		fmt.Fprintf(os.Stderr, "Must either set MOZJPEG_BIN or --mozjpeg-bin\n")
+		os.Exit(1)
 	}
 }
 
