@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/url"
@@ -123,15 +124,27 @@ func build(c *modulir.Context) []error {
 	//
 
 	{
-		commonSymlinks := [][2]string{
-			{c.SourceDir + "/css", c.TargetDir + "/css"},
-		}
-		for _, link := range commonSymlinks {
-			err := mfile.EnsureSymlink(c, link[0], link[1])
-			if err != nil {
-				return []error{nil}
+		if conf.GalEnv != envProduction {
+			commonSymlinks := [][2]string{
+				{c.SourceDir + "/css", c.TargetDir + "/css"},
+			}
+			for _, link := range commonSymlinks {
+				err := mfile.EnsureSymlink(c, link[0], link[1])
+				if err != nil {
+					return []error{nil}
+				}
 			}
 		}
+	}
+
+	//
+	// CSS
+	//
+
+	if conf.GalEnv == envProduction {
+		c.AddJob("css", func() (bool, error) {
+			return writeStaticAssets(c, ".")
+		})
 	}
 
 	//
@@ -171,6 +184,11 @@ func build(c *modulir.Context) []error {
 //
 //
 //////////////////////////////////////////////////////////////////////////////
+
+const envProduction = "production"
+
+//go:embed css/*.css
+var staticAssets embed.FS
 
 //go:embed views/*.ace
 var views embed.FS
@@ -276,7 +294,7 @@ func renderIndex(c *modulir.Context, allPhotoPaths []string) (bool, error) {
 	// In production, use views bundled into the binary by way of `go:embed`. In
 	// development, we read from local disk for less painful iteration on design
 	// where views need to be changed incrementally.
-	if conf.GalEnv == "production" {
+	if conf.GalEnv == envProduction {
 		aceOpts.Asset = views.ReadFile
 	}
 
@@ -289,6 +307,41 @@ func renderIndex(c *modulir.Context, allPhotoPaths []string) (bool, error) {
 		})
 	if err != nil {
 		return false, err
+	}
+
+	return true, nil
+}
+
+func writeStaticAssets(c *modulir.Context, relativePath string) (bool, error) {
+	dirEntries, err := staticAssets.ReadDir(relativePath)
+	if err != nil {
+		return false, xerrors.Errorf("error reading static assets structure: %w", err)
+	}
+	for _, dirEntry := range dirEntries {
+		target := path.Join(c.TargetDir, relativePath, dirEntry.Name())
+
+		if dirEntry.IsDir() {
+			if err := mfile.EnsureDir(c, target); err != nil {
+				return false, err
+			}
+			return writeStaticAssets(c, path.Join(relativePath, dirEntry.Name()))
+		}
+
+		sourceFile, err := staticAssets.Open(path.Join(relativePath, dirEntry.Name()))
+		if err != nil {
+			return false, xerrors.Errorf("error opening file '%s': %w", dirEntry.Name(), err)
+		}
+		defer sourceFile.Close()
+
+		targetFile, err := os.Create(target)
+		if err != nil {
+			return false, xerrors.Errorf("error creating file '%s': %w", target, err)
+		}
+		defer sourceFile.Close()
+
+		if _, err := io.Copy(targetFile, sourceFile); err != nil {
+			return false, xerrors.Errorf("error copying file '%s' to disk: %w", dirEntry.Name(), err)
+		}
 	}
 
 	return true, nil
