@@ -109,6 +109,7 @@ func build(c *modulir.Context) []error {
 
 	{
 		commonDirs := []string{
+			c.TargetDir + "/assets",
 			c.TargetDir + "/photos",
 		}
 		for _, dir := range commonDirs {
@@ -126,7 +127,7 @@ func build(c *modulir.Context) []error {
 	{
 		if conf.GalEnv != envProduction {
 			commonSymlinks := [][2]string{
-				{c.SourceDir + "/css", c.TargetDir + "/css"},
+				{c.SourceDir + "/assets/css", c.TargetDir + "/assets/css"},
 			}
 			for _, link := range commonSymlinks {
 				err := mfile.EnsureSymlink(c, link[0], link[1])
@@ -138,11 +139,11 @@ func build(c *modulir.Context) []error {
 	}
 
 	//
-	// CSS
+	// CSS / Static assets
 	//
 
 	if conf.GalEnv == envProduction {
-		c.AddJob("css", func() (bool, error) {
+		c.AddJob("static assets", func() (bool, error) {
 			return writeStaticAssets(c, ".")
 		})
 	}
@@ -187,7 +188,7 @@ func build(c *modulir.Context) []error {
 
 const envProduction = "production"
 
-//go:embed css/*.css
+//go:embed assets/css/*.css
 var staticAssets embed.FS
 
 //go:embed views/*.ace
