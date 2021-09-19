@@ -173,6 +173,14 @@ func build(c *modulir.Context) []error {
 		return renderIndex(c, allPhotoPaths)
 	})
 
+	//
+	// Robots.txt
+	//
+
+	c.AddJob("robots.txt", func() (bool, error) {
+		return renderRobotsTxt(c)
+	})
+
 	return nil
 }
 
@@ -309,6 +317,24 @@ func renderIndex(c *modulir.Context, allPhotoPaths []string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	return true, nil
+}
+
+func renderRobotsTxt(c *modulir.Context) (bool, error) {
+	content := `User-agent: *
+Disallow: /
+`
+
+	filePath := c.TargetDir + "/robots.txt"
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		return true, xerrors.Errorf("error creating file '%s': %w", filePath, err)
+	}
+	if _, err := outFile.WriteString(content); err != nil {
+		return true, xerrors.Errorf("error writing file '%s': %w", filePath, err)
+	}
+	outFile.Close()
 
 	return true, nil
 }
