@@ -1,0 +1,7 @@
+= content main
+  .gallery
+    {{range $photoPath := .AllPhotoPaths}}
+      .gallery_img
+        a href="{{To2X $photoPath}}"
+          img src="{{$photoPath}}" srcset="{{To2X $photoPath}} 2x, {{$photoPath}} 1x"
+    {{end}}

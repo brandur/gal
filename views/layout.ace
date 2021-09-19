@@ -1,0 +1,8 @@
+= doctype html
+
+html lang="en"
+  head
+    link href="css/main.css" media="screen" rel="stylesheet" type="text/css"
+
+  body
+    = yield main
