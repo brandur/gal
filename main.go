@@ -202,7 +202,7 @@ var staticAssets embed.FS
 //go:embed views/*.ace
 var views embed.FS
 
-func getLog() modulir.LoggerInterface {
+func getLog() *logrus.Logger {
 	log := logrus.New()
 
 	if conf.Verbose {
