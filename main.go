@@ -235,7 +235,7 @@ var defaultPhotoSizes = []mimage.PhotoSize{
 
 func fetchAndResizePhoto(c *modulir.Context, originalPath, targetDir string) (bool, error) {
 	return mimage.ResizeImage(c, originalPath,
-		targetDir, strings.TrimSuffix(path.Base(originalPath), path.Ext(originalPath)),
+		targetDir, strings.TrimSuffix(path.Base(originalPath), path.Ext(originalPath)), "",
 		mimage.PhotoGravityCenter, defaultPhotoSizes)
 }
 

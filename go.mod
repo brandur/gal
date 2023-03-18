@@ -8,14 +8,13 @@ go 1.16
 // replace github.com/brandur/modulir => /Users/brandur/Documents/projects/modulir
 
 require (
-	github.com/brandur/modulir v0.0.0-20210918213402-171ef6f5bcf3
-	github.com/brandur/sorg v0.0.0-20210911194023-a32e09d18f62
-	github.com/caarlos0/env/v6 v6.7.1 // indirect
+	github.com/brandur/modulir v0.0.0-20230124154845-7b50eb3f6036
+	github.com/caarlos0/env/v6 v6.7.1
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.2.1 // indirect
-	github.com/yosssi/ace v0.0.5 // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect
-	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	github.com/spf13/cobra v1.2.1
+	github.com/yosssi/ace v0.0.5
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 )
